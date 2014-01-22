@@ -22,7 +22,5 @@
     "chai": "~1.8.1",
     "sinon-chai": "~2.4.0"
   },
-  "dependencies": {
-    "lodash.partial": "~2.4.1"
-  }
+  "dependencies": {}
 }
