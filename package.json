@@ -1,0 +1,28 @@
+{
+  "name": "graceful",
+  "version": "0.0.0",
+  "description": "graceful",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/vvo/graceful.git"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/vvo/graceful/issues"
+  },
+  "devDependencies": {
+    "mocha": "~1.17.0",
+    "sandboxed-module": "~0.3.0",
+    "sinon": "~1.7.3",
+    "chai": "~1.8.1",
+    "sinon-chai": "~2.4.0"
+  },
+  "dependencies": {
+    "lodash.partial": "~2.4.1"
+  }
+}
