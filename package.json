@@ -1,19 +1,19 @@
 {
-  "name": "graceful",
+  "name": "forkie",
   "version": "0.0.1",
-  "description": "graceful",
+  "description": "forkie likes your forks",
   "main": "index.js",
   "scripts": {
     "test": "mocha"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/vvo/graceful.git"
+    "url": "git://github.com/vvo/forkie.git"
   },
   "author": "",
   "license": "BSD-2-Clause",
   "bugs": {
-    "url": "https://github.com/vvo/graceful/issues"
+    "url": "https://github.com/vvo/forkie/issues"
   },
   "devDependencies": {
     "mocha": "~1.17.0",
