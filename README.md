@@ -1,6 +1,3 @@
-forkie
-========
-
 # Forkie [![Build Status](https://travis-ci.org/vvo/forkie.png?branch=master)](https://travis-ci.org/vvo/forkie) [![Dependency Status](https://david-dm.org/vvo/forkie.png?theme=shields.io)](https://david-dm.org/vvo/forkie) [![devDependency Status](https://david-dm.org/vvo/forkie/dev-status.png?theme=shields.io)](https://david-dm.org/vvo/forkie#info=devDependencies)
 
 Forkie is a graceful process manager which allows you to:
