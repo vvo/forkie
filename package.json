@@ -20,7 +20,12 @@
     "sandboxed-module": "~0.3.0",
     "sinon": "~1.7.3",
     "chai": "~1.8.1",
-    "sinon-chai": "~2.4.0"
+    "sinon-chai": "~2.4.0",
+    "lodash.invoke": "~2.4.1",
+    "log-prefix": "0.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "deepmerge": "~0.2.7",
+    "async": "~0.2.10"
+  }
 }

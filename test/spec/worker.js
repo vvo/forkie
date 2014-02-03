@@ -109,7 +109,12 @@ describe('creating a graceful process', function() {
     });
 
     it('sends a ready message to master', function() {
-      expect(fakeProcess.send).to.be.calledWith({graceful: {status: 'ready', title: 'a forked worker'}});
+      expect(fakeProcess.send).to.be.calledWith({
+        graceful: {
+          status: 'ready',
+          title: 'a forked worker'
+        }
+      });
     });
 
     it('does not calls worker.start at first', function() {
@@ -131,7 +136,12 @@ describe('creating a graceful process', function() {
       });
 
       it('informs master through the communication channel', function() {
-        expect(fakeProcess.send).to.be.calledWith({graceful: {status: 'stopped'}});
+        expect(fakeProcess.send).to.be.calledWith({
+          graceful: {
+            status: 'stopped',
+            title: 'a forked worker'
+          }
+        });
       });
     });
 
@@ -172,7 +182,12 @@ describe('creating a graceful process', function() {
 
       it('sends a started message to the master', function() {
         expect(fakeProcess.send).to.be.called.once;
-        expect(fakeProcess.send).to.be.calledWith({graceful: {status: 'started'}});
+        expect(fakeProcess.send).to.be.calledWith({
+          graceful: {
+            status: 'started',
+            title: 'a forked worker'
+          }
+        });
       });
 
       it('make calls in the right order', function() {
