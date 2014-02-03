@@ -9,6 +9,8 @@ Forkie is a graceful process manager which allows you to:
 - get master events: worker ready, worker started, worker stopped
 - handle graceful stops (think long running jobs)
 
+Forkie solves the "how do we deal with graceful stops in our node.js application?".
+
 See the [examples](examples/).
 
 # master API
