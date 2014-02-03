@@ -9,8 +9,8 @@ require('log-prefix')('WORKER PID/' + process.pid + ' says:');
 var worker = forkie.worker('some worker ' + Date.now() , {
   start: function(cb) {
     console.log('starting');
-    cb();
     queue.concurrency = 1;
+    cb();
   },
   stop: function(cb) {
     clearInterval(interval);
