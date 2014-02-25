@@ -1,2 +1,3 @@
 ./test/spec/*.js
 --require ./test/bootstrap.js
+--reporter spec

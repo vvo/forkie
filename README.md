@@ -6,10 +6,12 @@ Forkie is a graceful process manager which allows you to:
   - node.js [cluster](http://nodejs.org/api/cluster.html#cluster_cluster_fork_env) workers
 - register start/stop hooks on master and workers
 - get workers events: ready/started/stopped
-- get master events: worker ready, worker started, worker stopped
+- get master events: worker ready, worker started, worker stopped, worker killed
 - handle graceful stops (think long running jobs)
+- automatically restart process
+- provide a REPL with start/stop/restart for each process
 
-Forkie solves the "how do we deal with graceful stops in our node.js application?".
+Forkie solves the "how do we deal with graceful start an stops in our node.js application?".
 
 See the [examples](examples/).
 
@@ -27,10 +29,13 @@ var workers = [
   require('cluster')
 ];
 
+// default options
 var opts = {
-  start: startMaster, // default: process.nextTick
-  stop: stopMaster,   // default: process.nextTick
-  killTimeout: 1500   // default: 5000ms
+  start: process.nextTick,  // executes before starting processes
+  stop: process.nextTick,   // executes before stopping processes
+  killTimeout: 5000         // how much `ms` to wait before killing a process that does not exits by itself
+  restarts: false           // how many times should we restart a failed process, put `Infinity` for infinite restarts
+  repl: false               // should we start a repl? See repl documentation
 };
 
 var master = require('forkie').master(workers, opts);
@@ -58,8 +63,18 @@ function stopMaster(cb) {
 }
 ```
 
-`killTimeout` is the amount of time in ms after which a worker has failed
-to stop gracefully.
+# REPL
+
+Forkie can provide you a handy REPL to start/stop/restart workers individually.
+
+You can use all the options from [dshaw/replify](https://github.com/dshaw/replify#options).
+
+See the many usable clients on to [connect to the REPL](https://github.com/dshaw/replify#connect-to-the-repl).
+
+Here's an example from [examples/master-repl.js](examples/master-repl.js) using
+[dshaw/repl-client](https://github.com/dshaw/repl-client):
+
+![example repl](http://dl.dropbox.com/u/3508235/Selection_152.png)
 
 # worker API
 

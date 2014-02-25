@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "deepmerge": "~0.2.7",
-    "async": "~0.2.10"
+    "async": "~0.2.10",
+    "replify": "~1.2.0"
   }
 }

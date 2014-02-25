@@ -42,6 +42,7 @@ describe('creating a graceful master process', function () {
         fork.kill = kill;
         forks.push(fork);
         fork.send = send;
+        fork.exitCode = null;
         return fork;
       })
     };
@@ -74,17 +75,16 @@ describe('creating a graceful master process', function () {
       process.nextTick(done);
     });
 
-    it('forked the provided modules', function() {
-      expect(fakeCp.fork).to.be.calledTwice;
-      expect(fakeCp.fork).to.be.calledWith('a-module.js');
-      expect(fakeCp.fork).to.be.calledWith('another-module.js');
-      expect(forks).to.length(2);
+    it('forked the first module', function() {
+      expect(fakeCp.fork).to.be.calledOnce;
+      expect(fakeCp.fork).to.be.calledWithExactly('a-module.js');
+      expect(forks).to.length(1);
     });
 
-    describe('when forks are ready', function () {
+    describe('when fork is ready', function () {
 
       beforeEach(function () {
-        invoke(forks, 'emit', 'message', {
+        forks[0].emit('message', {
           graceful: {
             status: 'ready',
             title: 'omg'
@@ -92,118 +92,197 @@ describe('creating a graceful master process', function () {
         });
       });
 
-      it('set title on processes', function() {
-        expect(forks[0].title).to.equal('omg');
-        expect(forks[1].title).to.equal('omg');
-      });
-
       it('emits ready event', function() {
-        expect(workerEmit).to.be.calledWith('worker ready', {
-          title: 'omg'
+        expect(workerEmit).to.be.calledOnce;
+        expect(workerEmit).to.be.calledWithMatch('worker ready', {
+          id: 0,
+          title: 'omg',
+          toFork: 'a-module.js',
+          restarts: {
+            automatic: 0,
+            manual: 0
+          }
         });
       })
 
       it('asks for process start', function() {
-        expect(send).to.be.calledTwice;
-        expect(send).to.be.calledWith({
+        expect(send).to.be.calledOnce;
+        expect(send).to.be.calledWithExactly({
           graceful: {
             action: 'start'
           }
         });
       });
 
-      describe('when fork has started', function () {
+      describe('when fork starts', function () {
         beforeEach(function () {
-          invoke(forks, 'emit', 'message', {
+          workerEmit.reset();
+          forks[0].emit('message', {
             graceful: {
-              status: 'started',
-              title: 'omg'
+              status: 'started'
             }
-          })
-        });
-
-        it('calls worker startCb', function() {
-          expect(startCb).to.be.calledOnce;
+          });
         });
 
         it('emits a started event', function() {
-          expect(workerEmit).to.be.calledWith('worker started', {
+          expect(workerEmit).to.be.calledOnce;
+          expect(workerEmit).to.be.calledWithMatch('worker started', {
+            id: 0,
+            toFork: 'a-module.js',
+            restarts: {
+              automatic: 0,
+              manual: 0
+            },
             title: 'omg'
           });
-        })
+        });
 
-        describe('when forks are connected', function () {
-          beforeEach(function () {
-            forks.forEach(function(fork) {
-              fork.connected = true;
+        describe('when second process is started', function() {
+          beforeEach(function() {
+            workerEmit.reset();
+
+            forks[1].emit('message', {
+              graceful: {
+                status: 'ready',
+                title: 'oh great'
+              }
+            });
+
+            forks[1].emit('message', {
+              graceful: {
+                status: 'started'
+              }
             });
           });
 
-          describe('and we receive a SIGTERM', function () {
+          it('starts second worker', function() {
+            expect(workerEmit).to.be.calledTwice;
+            expect(workerEmit).to.be.calledWithMatch('worker ready', {
+              id: 1,
+              toFork: 'another-module.js',
+              restarts: {
+                automatic: 0,
+                manual: 0
+              },
+              title: 'oh great'
+            });
+            expect(workerEmit).to.be.calledWithMatch('worker started', {
+              id: 1,
+              toFork: 'another-module.js',
+              restarts: {
+                automatic: 0,
+                manual: 0
+              },
+              title: 'oh great'
+            });
+          });
+
+          it('calls startCb', function() {
+            expect(startCb).to.be.calledOnce;
+          });
+
+          describe('when forks are connected', function () {
             beforeEach(function () {
-              send.reset();
-              fakeProcess.emit('SIGTERM');
-            });
-
-            it('gently ask the forks to stop', function() {
-              expect(send).to.be.calledTwice;
-              expect(send).to.be.calledWith({
-                graceful: {
-                  action: 'stop'
-                }
+              forks.forEach(function(fork) {
+                fork.connected = true;
               });
             });
 
-            describe('when worker stops', function () {
+            describe('and we receive a SIGTERM', function () {
               beforeEach(function () {
-                invoke(forks, 'emit', 'exit', 0);
+                send.reset();
+                fakeProcess.emit('SIGTERM');
               });
 
-              it('emits a worker stopped event', function() {
-                expect(workerEmit).to.be.calledWith('worker stopped', {
-                  code: 0,
-                  title: 'omg'
+              it('gently ask the forks to stop', function() {
+                expect(send).to.be.calledTwice;
+                expect(send).to.be.calledWithExactly({
+                  graceful: {
+                    action: 'stop'
+                  }
                 });
-              });
-            });
-
-            describe('when worker does not stops fast enough', function () {
-              beforeEach(function () {
-                this.clock.tick(5 * 1000);
-              });
-
-              it('kills the worker with SIGKILL', function() {
-                expect(kill).to.be.calledTwice;
-                expect(kill).to.be.calledWith('SIGKILL');
               });
 
               describe('when worker stops', function () {
                 beforeEach(function () {
-                  invoke(forks, 'emit', 'exit', 1, 'SIGKILL');
+                  workerEmit.reset();
+                  invoke(forks, 'emit', 'exit', 0);
                 });
 
                 it('emits a worker stopped event', function() {
-                  expect(workerEmit).to.be.calledWith('worker stopped', {
-                    code: 1,
-                    signal: 'SIGKILL',
+                  expect(workerEmit).to.be.calledTwice;
+                  expect(workerEmit).to.be.calledWithMatch('worker stopped', {
                     title: 'omg'
+                  });
+                  expect(workerEmit).to.be.calledWithMatch('worker stopped', {
+                    title: 'oh great'
+                  });
+                });
+
+                it('calls stopCb', function() {
+                  expect(stopCb).to.be.calledOnce;
+                });
+              });
+
+              describe('when worker does not stops fast enough', function () {
+                beforeEach(function () {
+                  this.clock.tick(5 * 1000);
+                });
+
+                it('kills the worker with SIGKILL', function() {
+                  expect(kill).to.be.calledTwice;
+                  expect(kill).to.be.calledWithExactly('SIGKILL');
+                });
+
+                describe('when worker finally stops', function () {
+                  beforeEach(function () {
+                    workerEmit.reset();
+                    invoke(forks, 'emit', 'exit', 1, 'SIGKILL');
+                  });
+
+                  it('emits a worker killed event', function() {
+                    expect(workerEmit).to.be.calledTwice;
+                    expect(workerEmit).to.be.calledWithMatch('worker killed', {
+                      title: 'omg'
+                    });
+                    expect(workerEmit).to.be.calledWithMatch('worker killed', {
+                      title: 'oh great'
+                    });
                   });
                 });
               });
             });
           });
-        });
 
-        describe('when forks are not connected', function () {
-          describe('and we receive a SIGTERM', function () {
-            beforeEach(function () {
-              fakeProcess.emit('SIGTERM');
-            });
+          describe('when forks are not connected', function () {
+            describe('and we receive a SIGTERM', function () {
+              beforeEach(function () {
+                fakeProcess.emit('SIGTERM');
+              });
 
-            it('calls fork.kill', function() {
-              expect(kill).to.be.calledTwice;
+              it('calls fork.kill', function() {
+                expect(kill).to.be.calledTwice;
+              });
             });
           });
+
+          describe('when fork failed', function () {
+            beforeEach(function() {
+              forks[0].exitCode = 8;
+            });
+
+            describe('and we receive a SIGTERM', function () {
+              beforeEach(function () {
+                fakeProcess.emit('SIGTERM');
+                forks[1].emit('exit', 0);
+              });
+
+              it('reaches stopCb', function() {
+                expect(stopCb).to.be.calledOnce;
+              });
+            });
+          });
+
         });
       });
     });
@@ -221,8 +300,9 @@ describe('creating a graceful master process', function () {
       process.nextTick(done);
     });
 
-    it('called fork twice', function() {
-      expect(fork).to.be.calledTwice;
+    // forks are made in series not in parallel
+    it('called fork once', function() {
+      expect(fork).to.be.calledOnce;
     })
   });
 
@@ -243,21 +323,6 @@ describe('creating a graceful master process', function () {
       expect(fakeCp.fork).to.be.calledOnce;
       expect(start).to.be.calledOnce;
       expect(start).to.be.calledBefore(fakeCp.fork);
-    });
-
-    describe('when worker starts', function () {
-      beforeEach(function () {
-        invoke(forks, 'emit', 'message', {
-          graceful: {
-            status: 'started'
-          }
-        })
-      });
-
-      it('calls function in the right order', function() {
-        expect(startCb).to.be.calledOnce;
-        expect(startCb).to.be.calledAfter(fakeCp.fork);
-      });
     });
   });
 
@@ -302,7 +367,72 @@ describe('creating a graceful master process', function () {
     });
   });
 
-  // test events
-  // test killTimeout
-  // add integration testing master + standalone worker
+  describe('when using automatic restart', function() {
+    beforeEach(function(done) {
+      master = gracefulMaster([
+        'a-restarted-module.js'
+      ], {
+        restarts: 1
+      });
+
+      process.nextTick(function() {
+        forks[0].emit('message', {
+          graceful: {
+            status: 'ready',
+            title: 'yeepee'
+          }
+        });
+
+        forks[0].emit('message', {
+          graceful: {
+            status: 'started'
+          }
+        });
+
+        done();
+      });
+    });
+
+    describe('when fork exits with 1', function(done) {
+      beforeEach(function () {
+        forks[0].emit('exit', 1);
+        // restart timeout
+        this.clock.tick(1000);
+      });
+
+      it('calls fork again', function() {
+        // two times: init and restart
+        expect(fakeCp.fork).to.be.calledTwice;
+        expect(fakeCp.fork).to.be.calledWithExactly('a-restarted-module.js');
+      });
+
+      it('sends a restarted event', function() {
+        expect(workerEmit).to.be.calledWithMatch('worker restarted', {
+          restarts: { manual: 0, automatic: 1 }
+        });
+      });
+
+    });
+
+    describe('when fork exits with 0', function(done) {
+      beforeEach(function () {
+        forks[0].emit('exit', 0);
+      });
+
+      it('do not call fork again', function() {
+        expect(fakeCp.fork).to.be.calledOnce;
+      });
+
+      it('sends a restarted event', function() {
+        expect(workerEmit).to.not.be.calledWithExactly('worker restarted', {
+          id: 0,
+          toFork: 'a-restarted-module.js',
+          restarts: { manual: 0, automatic: 1 }
+        });
+      });
+
+    });
+
+
+  });
 });

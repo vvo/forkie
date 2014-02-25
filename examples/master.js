@@ -29,10 +29,10 @@ var master = forkie.master([
     console.log('will stop workers in 200ms');
     setTimeout(cb, 200)
   },
-  killTimeout: 500
+  killTimeout: 2000
 });
 
-['ready', 'started', 'stopped'].forEach(logEvent);
+['ready', 'started', 'stopped', 'killed'].forEach(logEvent);
 
 function logEvent(name) {
   master.on('worker '+ name, function(params) {
