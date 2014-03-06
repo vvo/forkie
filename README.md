@@ -34,7 +34,7 @@ var opts = {
   start: process.nextTick,  // executes before starting processes
   stop: process.nextTick,   // executes before stopping processes
   killTimeout: 5000         // how much `ms` to wait before killing a process that does not exits by itself
-  restarts: false           // how many times should we restart a failed process, put `Infinity` for infinite restarts
+  restarts: false           // how many times should we restart a failed process, put `Infinity` or -1 for infinite restarts
   repl: false               // should we start a repl? See repl documentation
 };
 
