@@ -283,7 +283,7 @@ describe('creating a graceful master process', function () {
             });
           });
 
-          describe.only('when cluster fork failed', function () {
+          describe('when cluster fork failed', function () {
             beforeEach(function() {
               forks[0].process = { exitCode: 8 };
             });
