@@ -283,6 +283,23 @@ describe('creating a graceful master process', function () {
             });
           });
 
+          describe.only('when cluster fork failed', function () {
+            beforeEach(function() {
+              forks[0].process = { exitCode: 8 };
+            });
+
+            describe('and we receive a SIGTERM', function () {
+              beforeEach(function () {
+                fakeProcess.emit('SIGTERM');
+                forks[1].emit('exit', 0);
+              });
+
+              it('reaches stopCb', function() {
+                expect(stopCb).to.be.calledOnce;
+              });
+            });
+          });
+
         });
       });
     });
