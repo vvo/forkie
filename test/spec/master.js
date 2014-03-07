@@ -431,16 +431,37 @@ describe('creating a graceful master process', function () {
 
     });
 
-    describe('when fork exits with 0', function(done) {
+    describe('when fork exits with 1 and a signal was sent', function(done) {
       beforeEach(function () {
-        forks[0].emit('exit', 0);
+        forks[0].emit('exit', 1, 'SIGKILL');
+        // restart timeout
+        this.clock.tick(1000);
       });
 
       it('do not call fork again', function() {
         expect(fakeCp.fork).to.be.calledOnce;
       });
 
-      it('sends a restarted event', function() {
+      it('does not sends a restarted event', function() {
+        expect(workerEmit).to.not.be.calledWithExactly('worker restarted', {
+          id: 0,
+          toFork: 'a-restarted-module.js',
+          restarts: { manual: 0, automatic: 1 }
+        });
+      });
+
+    });
+
+    describe('when fork exits with 0', function(done) {
+      beforeEach(function () {
+        forks[0].emit('exit', 0);
+      });
+
+      it('does not call fork again', function() {
+        expect(fakeCp.fork).to.be.calledOnce;
+      });
+
+      it('does not sends a restarted event', function() {
         expect(workerEmit).to.not.be.calledWithExactly('worker restarted', {
           id: 0,
           toFork: 'a-restarted-module.js',
