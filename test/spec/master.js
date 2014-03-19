@@ -385,92 +385,119 @@ describe('creating a graceful master process', function () {
   });
 
   describe('when using automatic restart', function() {
-    beforeEach(function(done) {
+    beforeEach(function() {
       master = gracefulMaster([
         'a-restarted-module.js'
       ], {
         restarts: 1
       });
-
-      process.nextTick(function() {
-        forks[0].emit('message', {
-          graceful: {
-            status: 'ready',
-            title: 'yeepee'
-          }
-        });
-
-        forks[0].emit('message', {
-          graceful: {
-            status: 'started'
-          }
-        });
-
-        done();
-      });
     });
 
-    describe('when fork exits with 1', function(done) {
-      beforeEach(function () {
-        forks[0].emit('exit', 1);
-        // restart timeout
-        this.clock.tick(1000);
-      });
+    describe('and worker as started gracefully', function() {
+      beforeEach(function(done) {
+        process.nextTick(function() {
+          forks[0].emit('message', {
+            graceful: {
+              status: 'ready',
+              title: 'yeepee'
+            }
+          });
 
-      it('calls fork again', function() {
-        // two times: init and restart
-        expect(fakeCp.fork).to.be.calledTwice;
-        expect(fakeCp.fork).to.be.calledWithExactly('a-restarted-module.js');
-      });
+          forks[0].emit('message', {
+            graceful: {
+              status: 'started'
+            }
+          });
 
-      it('sends a restarted event', function() {
-        expect(workerEmit).to.be.calledWithMatch('worker restarted', {
-          restarts: { manual: 0, automatic: 1 }
+          done();
         });
+      });
+
+      describe('when fork exits with 1', function(done) {
+        beforeEach(function () {
+          forks[0].emit('exit', 1);
+          // restart timeout
+          this.clock.tick(1000);
+        });
+
+        it('calls fork again', function() {
+          // two times: init and restart
+          expect(fakeCp.fork).to.be.calledTwice;
+          expect(fakeCp.fork).to.be.calledWithExactly('a-restarted-module.js');
+        });
+
+        it('sends a restarted event', function() {
+          expect(workerEmit).to.be.calledWithMatch('worker restarted', {
+            restarts: { manual: 0, automatic: 1 }
+          });
+        });
+
+      });
+
+      describe('when fork exits with 1 and a signal was sent', function(done) {
+        beforeEach(function () {
+          forks[0].emit('exit', 1, 'SIGKILL');
+          // restart timeout
+          this.clock.tick(1000);
+        });
+
+        it('do not call fork again', function() {
+          expect(fakeCp.fork).to.be.calledOnce;
+        });
+
+        it('does not sends a restarted event', function() {
+          expect(workerEmit).to.not.be.calledWithExactly('worker restarted', {
+            id: 0,
+            toFork: 'a-restarted-module.js',
+            restarts: { manual: 0, automatic: 1 }
+          });
+        });
+
+      });
+
+      describe('when fork exits with 0', function(done) {
+        beforeEach(function () {
+          forks[0].emit('exit', 0);
+        });
+
+        it('does not call fork again', function() {
+          expect(fakeCp.fork).to.be.calledOnce;
+        });
+
+        it('does not sends a restarted event', function() {
+          expect(workerEmit).to.not.be.calledWithExactly('worker restarted', {
+            id: 0,
+            toFork: 'a-restarted-module.js',
+            restarts: { manual: 0, automatic: 1 }
+          });
+        });
+
       });
 
     });
 
-    describe('when fork exits with 1 and a signal was sent', function(done) {
-      beforeEach(function () {
-        forks[0].emit('exit', 1, 'SIGKILL');
-        // restart timeout
-        this.clock.tick(1000);
-      });
-
-      it('do not call fork again', function() {
-        expect(fakeCp.fork).to.be.calledOnce;
-      });
-
-      it('does not sends a restarted event', function() {
-        expect(workerEmit).to.not.be.calledWithExactly('worker restarted', {
-          id: 0,
-          toFork: 'a-restarted-module.js',
-          restarts: { manual: 0, automatic: 1 }
+    describe('and worker did not yet start', function() {
+      describe('when fork exits with 1', function() {
+        beforeEach(function () {
+          forks[0].emit('exit', 1);
+          // restart timeout
+          this.clock.tick(1000);
         });
-      });
 
-    });
-
-    describe('when fork exits with 0', function(done) {
-      beforeEach(function () {
-        forks[0].emit('exit', 0);
-      });
-
-      it('does not call fork again', function() {
-        expect(fakeCp.fork).to.be.calledOnce;
-      });
-
-      it('does not sends a restarted event', function() {
-        expect(workerEmit).to.not.be.calledWithExactly('worker restarted', {
-          id: 0,
-          toFork: 'a-restarted-module.js',
-          restarts: { manual: 0, automatic: 1 }
+        it('calls fork again', function() {
+          // two times: init and restart
+          expect(fakeCp.fork).to.be.calledTwice;
+          expect(fakeCp.fork).to.be.calledWithExactly('a-restarted-module.js');
         });
+
+        it('sends a restarted event', function() {
+          expect(workerEmit).to.be.calledWithMatch('worker restarted', {
+            restarts: { manual: 0, automatic: 1 }
+          });
+        });
+
       });
-
     });
-
 
   });
 });
