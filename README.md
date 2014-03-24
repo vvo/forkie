@@ -133,15 +133,33 @@ All messages are sent with [IPC](http://nodejs.org/api/child_process.html#child_
 
 # forkie stop workflow
 
+- master receives `SIGTERM`
+- master calls user provided `stop(cb)` function
+- master sends a `{ graceful: { action: 'stop' } }`, received by workers
+- workers calls user provided `stop(cb)` function
+- workers sends a `{ graceful: { status: 'stopped' } }`, received by master
+- master emits a `{ graceful: { status: 'stopped' } }` event
+
+If worker was working (i.e. `.working(true)` was called last), it will wait
+for `.working(false)` to be called.
+
+If worker did not gracefully exits before `killTimeout`, it will be [.kill('SIGKILL')](http://nodejs.org/api/child_process.html#child_process_child_kill_signal)ed.
+
+If master does not exits by itself, it will stay online.
+
+Master and worker exits are up to you, you must close all connections and timers for process
+to exits gracefully.
+
 # master failures
 
 When master fails, all forked workers will automatically exit because they listen
-to 
+to [disconnect](http://nodejs.org/api/child_process.html#child_process_event_disconnect) event.
 
-# differences with [isaacs/cluster-master](https://github.com/isaacs/cluster-master)
+# key differences with [isaacs/cluster-master](https://github.com/isaacs/cluster-master)
 
 - no resize()
-- provide a graceful stop API through [.working(true/false)](# .working(true/false) so you don't
+- provide a graceful stop API through [.working(true/false)](#.working(true/false)
+- fully tested
 
 # Graceful exit
 
