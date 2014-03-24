@@ -145,6 +145,33 @@ describe('creating a graceful process', function() {
       });
     });
 
+    describe('when master disconnects while stopping', function() {
+      beforeEach(function (done) {
+        sinon.stub(console, 'error');
+        worker.stop = sinon.stub().yieldsAsync();
+        fakeProcess.exit = sinon.spy();
+        fakeProcess.emit('SIGTERM');
+        process.nextTick(function() {
+          fakeProcess.emit('disconnect')
+        });
+        process.nextTick(done);
+      });
+
+      it('forces process.exit', function(done) {
+        process.nextTick(function() {
+          expect(fakeProcess.exit).to.be.called.once;
+          expect(fakeProcess.exit).to.be.calledWith(1);
+          expect(console.error).to.be.calledWith('Master process died, forced exit of a forked worker');
+          done();
+        });
+      });
+
+      afterEach(function() {
+        console.error.restore();
+      });
+
+    });
+
     describe('when master disconnects', function () {
       beforeEach(function () {
         fakeProcess.exit = sinon.spy();
