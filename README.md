@@ -119,6 +119,30 @@ after dealing with a job, use `worker.working(false)`.
 See [examples/job-worker.js](examples/job-worker.js) for
 a more concrete example.
 
+# forkie start workflow
+
+All messages are sent with [IPC](http://nodejs.org/api/child_process.html#child_process_child_send_message_sendhandle)
+
+- master calls user provided `start(cb)` function
+- master forks every asked module (either filename or cluster.fork())
+- workers sends a `{ graceful: { status: 'ready' } }` message, received by master
+- master sends every fork a `{ graceful: { action: 'start' } }`, received by workers
+- workers calls user provided `start(cb)` function
+- workers sends a `{ graceful: { status: 'started' } }`, received by master
+- master emits a `{ graceful: { status: 'started' } }` event
+
+# forkie stop workflow
+
+# master failures
+
+When master fails, all forked workers will automatically exit because they listen
+to 
+
+# differences with [isaacs/cluster-master](https://github.com/isaacs/cluster-master)
+
+- no resize()
+- provide a graceful stop API through [.working(true/false)](# .working(true/false) so you don't
+
 # Graceful exit
 
 Forkie will not call `process.exit()` for you.
