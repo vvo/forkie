@@ -4,13 +4,13 @@
 var forkie = require('../');
 var path = require('path');
 var unstoppableWorker = path.join(__dirname, 'unstoppable-worker.js');
-var failedWorker = path.join(__dirname, 'failed-worker.js');
 
 require('log-prefix')('MASTER PID/' + process.pid + ' says:');
 var masterLog;
 var master = forkie.master([
   unstoppableWorker
 ], {
+  restarts: -1,
   start: function(cb) {
     masterLog = setInterval(function() {
       console.log('master is alive')
@@ -20,8 +20,8 @@ var master = forkie.master([
   },
   stop: function(cb) {
     clearInterval(masterLog);
-    console.log('will stop workers in 200ms');
-    setTimeout(cb, 200);
+    console.log('will stop workers in 100ms');
+    setTimeout(cb, 100);
     setTimeout(function() {
       process.exit(1);
     }, 200)

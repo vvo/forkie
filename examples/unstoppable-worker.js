@@ -8,7 +8,7 @@ var worker = forkie.worker('unstoppable worker', {
   },
   stop: function(cb) {
     console.log('stopping');
-    cb();
+    setTimeout(cb, 1000)
   }
 });
 
