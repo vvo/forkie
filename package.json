@@ -1,6 +1,6 @@
 {
   "name": "forkie",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "forkie likes your forks",
   "main": "index.js",
   "scripts": {
