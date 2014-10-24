@@ -18,7 +18,7 @@ See the [examples](examples/).
 # master API
 
 A forkie master will forks all the workers you give to him.
-Workers must implement the [worker API](#worker API).
+Workers must implement the [worker API](#worker-api).
 
 ```js
 var workers = [
