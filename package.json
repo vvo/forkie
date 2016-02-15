@@ -16,13 +16,13 @@
     "url": "https://github.com/vvo/forkie/issues"
   },
   "devDependencies": {
-    "mocha": "~1.17.0",
-    "sandboxed-module": "~0.3.0",
-    "sinon": "~1.8.1",
-    "chai": "~1.9.0",
-    "sinon-chai": "~2.5.0",
-    "lodash.invoke": "~2.4.1",
-    "log-prefix": "0.0.0"
+    "chai": "^3.5.0",
+    "lodash.invokemap": "^4.1.0",
+    "log-prefix": "0.0.0",
+    "mocha": "^2.4.5",
+    "sandboxed-module": "^0.3.0",
+    "sinon": "^1.17.3",
+    "sinon-chai": "^2.8.0"
   },
   "dependencies": {
     "deepmerge": "~0.2.7",
