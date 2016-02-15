@@ -1,6 +1,6 @@
 // chai
 var chai = require('chai');
-chai.Assertion.includeStack = true;
+chai.config.includeStack = true;
 chai.use(require('sinon-chai'));
 
 // expose global test helpers

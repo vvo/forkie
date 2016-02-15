@@ -1,7 +1,7 @@
 describe('creating a graceful master process', function () {
   var EventEmitter = require('events').EventEmitter;
   var SandboxedModule = require('sandboxed-module');
-  var invoke= require('lodash.invoke');
+  var invokemap = require('lodash.invokemap');
 
   var fakeProcess;
   var fakeWorker;
@@ -206,7 +206,7 @@ describe('creating a graceful master process', function () {
               describe('when worker stops', function () {
                 beforeEach(function () {
                   workerEmit.reset();
-                  invoke(forks, 'emit', 'exit', 0);
+                  invokemap(forks, 'emit', 'exit', 0);
                 });
 
                 it('emits a worker stopped event', function() {
@@ -237,7 +237,7 @@ describe('creating a graceful master process', function () {
                 describe('when worker finally stops', function () {
                   beforeEach(function () {
                     workerEmit.reset();
-                    invoke(forks, 'emit', 'exit', 1, 'SIGKILL');
+                    invokemap(forks, 'emit', 'exit', 1, 'SIGKILL');
                   });
 
                   it('emits a worker killed event', function() {
