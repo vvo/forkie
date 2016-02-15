@@ -25,9 +25,9 @@
     "sinon-chai": "^2.8.0"
   },
   "dependencies": {
+    "async": "~0.9.2",
+    "debug": "~2.2.0",
     "deepmerge": "~0.2.7",
-    "async": "~0.2.10",
-    "replify": "git://github.com/vvo/replify#2e4b54333e386d1854b5d465095cb0973ca04167",
-    "debug": "^0.8.0"
+    "replify": "git://github.com/vvo/replify#2e4b54333e386d1854b5d465095cb0973ca04167"
   }
 }
