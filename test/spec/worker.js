@@ -1,16 +1,19 @@
-describe('creating a graceful process', function() {
-  var EventEmitter = require('events').EventEmitter;
-  var SandboxedModule = require('sandboxed-module');
+'use strict';
 
-  var fakeProcess;
+var EventEmitter = require('events').EventEmitter;
+var SandboxedModule = require('sandboxed-module');
+
+describe('creating a graceful process', function() {
+  var processMock;
   var graceful;
   var worker;
 
   beforeEach(function () {
     this.clock = sinon.useFakeTimers();
-    fakeProcess = new EventEmitter();
-    fakeProcess.version = 'gotohell-2.0';
-    fakeProcess.nextTick = sinon.stub().yieldsAsync();
+
+    processMock = new EventEmitter();
+    processMock.version = 'gotohell-2.0';
+    processMock.nextTick = sinon.stub().yieldsAsync();
 
     worker = {
       start: sinon.stub().yields(),
@@ -22,11 +25,11 @@ describe('creating a graceful process', function() {
     this.clock.restore();
   });
 
-  describe('when not started as a fork', function() {
+  context('when not started as a fork', function() {
     beforeEach(function (done) {
       var gracefulWorker = SandboxedModule.require(
         '../../lib/worker.js', {
-          globals: {process: fakeProcess}
+          globals: {process: processMock}
         }
       );
       graceful = gracefulWorker('a worker', worker);
@@ -39,18 +42,18 @@ describe('creating a graceful process', function() {
     });
 
     it('calls worker.start', function() {
-      expect(worker.start).to.be.called.once;
+      expect(worker.start).to.have.been.called.once;
     });
 
     it('emits a started event', function() {
-      expect(graceful.emit).to.be.calledWith('started');
+      expect(graceful.emit).to.have.been.calledWith('started');
     });
 
-    describe('receiving a SIGTERM while busy', function () {
+    context('on receiving a SIGTERM while busy', function () {
       beforeEach(function (done) {
         graceful.working(true);
-        fakeProcess.once('SIGTERM', done);
-        fakeProcess.emit('SIGTERM');
+        processMock.once('SIGTERM', done);
+        processMock.emit('SIGTERM');
       });
 
       it('does not calls worker.stop', function() {
@@ -61,42 +64,42 @@ describe('creating a graceful process', function() {
         expect(graceful.emit).to.not.be.calledWith('stopped');
       });
 
-      describe('when we are not busy anymore', function() {
+      context('when we are not busy anymore', function() {
         beforeEach(function () {
           graceful.working(false);
         });
 
         it('calls worker.stop', function() {
-          expect(worker.stop).to.be.called.once;
+          expect(worker.stop).to.have.been.called.once;
           expect(worker.stop.getCall(0).args[0]).to.be.a.Function;
         });
 
         it('emits a stopped event', function() {
-          expect(graceful.emit).to.be.calledWith('stopped');
+          expect(graceful.emit).to.have.been.calledWith('stopped');
         });
       });
     });
 
-    describe('receiving a SIGTERM while not busy', function () {
+    context('on receiving a SIGTERM while not busy', function () {
       beforeEach(function (done) {
-        fakeProcess.once('SIGTERM', done);
-        fakeProcess.emit('SIGTERM');
+        processMock.once('SIGTERM', done);
+        processMock.emit('SIGTERM');
       });
 
       it('calls worker.stop', function() {
-        expect(worker.stop).to.be.called.once;
+        expect(worker.stop).to.have.been.called.once;
         expect(worker.stop.getCall(0).args[0]).to.be.a.Function;
       });
     });
   });
 
-  describe('when started as a fork', function () {
+  context('when started as a fork', function () {
     beforeEach(function (done) {
-      fakeProcess.send = sinon.spy();
-      fakeProcess.disconnect = sinon.spy();
+      processMock.send = sinon.spy();
+      processMock.disconnect = sinon.spy();
       var gracefulWorker = SandboxedModule.require(
           '../../lib/worker.js', {
-          globals: {process: fakeProcess}
+          globals: {process: processMock}
         }
       );
       graceful = gracefulWorker('a forked worker', worker);
@@ -105,11 +108,11 @@ describe('creating a graceful process', function() {
     });
 
     it('emits a ready event', function() {
-      expect(graceful.emit).to.be.calledWith('ready');
+      expect(graceful.emit).to.have.been.calledWith('ready');
     });
 
     it('sends a ready message to master', function() {
-      expect(fakeProcess.send).to.be.calledWith({
+      expect(processMock.send).to.have.been.calledWith({
         graceful: {
           status: 'ready',
           title: 'a forked worker'
@@ -121,22 +124,22 @@ describe('creating a graceful process', function() {
       expect(worker.start).to.not.be.called;
     });
 
-    describe('when receiving a SIGTERM', function () {
+    context('when receiving a SIGTERM', function () {
       beforeEach(function (done) {
-        fakeProcess.once('SIGTERM', done);
-        fakeProcess.emit('SIGTERM');
+        processMock.once('SIGTERM', done);
+        processMock.emit('SIGTERM');
       });
 
       it('calls worker.stop', function() {
-        expect(worker.stop).to.be.called.once;
+        expect(worker.stop).to.have.been.called.once;
       });
 
       it('emits a stoped event', function() {
-        expect(graceful.emit).to.be.calledWith('stopped');
+        expect(graceful.emit).to.have.been.calledWith('stopped');
       });
 
       it('informs master through the communication channel', function() {
-        expect(fakeProcess.send).to.be.calledWith({
+        expect(processMock.send).to.have.been.calledWith({
           graceful: {
             status: 'stopped',
             title: 'a forked worker'
@@ -145,23 +148,23 @@ describe('creating a graceful process', function() {
       });
     });
 
-    describe('when master disconnects while stopping', function() {
+    context('when master disconnects while stopping', function() {
       beforeEach(function (done) {
         sinon.stub(console, 'error');
         worker.stop = sinon.stub().yieldsAsync();
-        fakeProcess.exit = sinon.spy();
-        fakeProcess.emit('SIGTERM');
+        processMock.exit = sinon.spy();
+        processMock.emit('SIGTERM');
         process.nextTick(function() {
-          fakeProcess.emit('disconnect')
+          processMock.emit('disconnect')
         });
         process.nextTick(done);
       });
 
       it('forces process.exit', function(done) {
         process.nextTick(function() {
-          expect(fakeProcess.exit).to.be.called.once;
-          expect(fakeProcess.exit).to.be.calledWith(1);
-          expect(console.error).to.be.calledWith('Master process died, forced exit of a forked worker');
+          expect(processMock.exit).to.have.been.called.once;
+          expect(processMock.exit).to.have.been.calledWith(1);
+          expect(console.error).to.have.been.calledWith('Master process died, forced exit of a forked worker');
           done();
         });
       });
@@ -172,18 +175,18 @@ describe('creating a graceful process', function() {
 
     });
 
-    describe('when master disconnects', function () {
+    context('when master disconnects', function () {
       beforeEach(function () {
-        fakeProcess.exit = sinon.spy();
+        processMock.exit = sinon.spy();
         sinon.stub(console, 'error');
-        fakeProcess.emit('disconnect');
+        processMock.emit('disconnect');
       });
 
       it('forces process.exit', function(done) {
         process.nextTick(function() {
-          expect(fakeProcess.exit).to.be.called.once;
-          expect(fakeProcess.exit).to.be.calledWith(1);
-          expect(console.error).to.be.calledWith('Master process died, forced exit of a forked worker');
+          expect(processMock.exit).to.have.been.called.once;
+          expect(processMock.exit).to.have.been.calledWith(1);
+          expect(console.error).to.have.been.calledWith('Master process died, forced exit of a forked worker');
           done();
         });
       });
@@ -193,23 +196,23 @@ describe('creating a graceful process', function() {
       });
     });
 
-    describe('when master asks for start', function () {
+    context('when master asks for start', function () {
       beforeEach(function () {
-        fakeProcess.emit('message', {graceful: {action: 'start'}});
+        processMock.emit('message', {graceful: {action: 'start'}});
       });
 
       it('calls worker.start', function() {
-        expect(worker.start).to.be.called.once;
+        expect(worker.start).to.have.been.called.once;
       });
 
       it('emits a started event', function() {
-        expect(graceful.emit).to.be.called.once;
-        expect(graceful.emit).to.be.calledWith('started');
+        expect(graceful.emit).to.have.been.called.once;
+        expect(graceful.emit).to.have.been.calledWith('started');
       });
 
       it('sends a started message to the master', function() {
-        expect(fakeProcess.send).to.be.called.once;
-        expect(fakeProcess.send).to.be.calledWith({
+        expect(processMock.send).to.have.been.called.once;
+        expect(processMock.send).to.have.been.calledWith({
           graceful: {
             status: 'started',
             title: 'a forked worker'
@@ -218,7 +221,7 @@ describe('creating a graceful process', function() {
       });
 
       it('make calls in the right order', function() {
-        expect(worker.start).to.be.calledBefore(fakeProcess.send);
+        expect(worker.start).to.have.been.calledBefore(processMock.send);
       });
     });
   });
