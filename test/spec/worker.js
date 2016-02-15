@@ -14,6 +14,7 @@ describe('creating a graceful process', function() {
     processMock = new EventEmitter();
     processMock.version = 'gotohell-2.0';
     processMock.nextTick = sinon.stub().yieldsAsync();
+    processMock.pid = 99999; // for logs
 
     worker = {
       start: sinon.stub().yields(),
@@ -164,7 +165,7 @@ describe('creating a graceful process', function() {
         process.nextTick(function() {
           expect(processMock.exit).to.have.been.called.once;
           expect(processMock.exit).to.have.been.calledWith(1);
-          expect(console.error).to.have.been.calledWith('Master process died, forced exit of a forked worker');
+          expect(console.error).to.have.been.calledWith('"%s"/%d Master process died, forced exit', 'a forked worker', 99999);
           done();
         });
       });
@@ -186,7 +187,7 @@ describe('creating a graceful process', function() {
         process.nextTick(function() {
           expect(processMock.exit).to.have.been.called.once;
           expect(processMock.exit).to.have.been.calledWith(1);
-          expect(console.error).to.have.been.calledWith('Master process died, forced exit of a forked worker');
+          expect(console.error).to.have.been.calledWith('"%s"/%d Master process died, forced exit', 'a forked worker', 99999);
           done();
         });
       });
